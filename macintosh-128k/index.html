@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Macintosh 128K · three.js</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1c1a17; }
+  #app { position: fixed; inset: 0; }
+  .hud {
+    position: fixed; left: 16px; bottom: 14px;
+    color: #cfc8ba;
+    font: 13px/1.7 ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+    text-shadow: 0 1px 3px rgba(0,0,0,.7);
+    pointer-events: none; user-select: none;
+  }
+  .hud b { color: #efe9dc; font-size: 15px; letter-spacing: .4px; }
+  .err {
+    position: fixed; inset: 0; display: none; place-items: center;
+    color: #e8b9b0; font: 14px ui-monospace, monospace; white-space: pre-wrap; padding: 40px;
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div class="hud">
+  <b>Macintosh 128K（1984）</b><br>
+  左键拖拽旋转 · 滚轮缩放 · 右键平移 · 按 <b>R</b> 切换自动旋转
+</div>
+<div class="err" id="err"></div>
+<script>
+  window.addEventListener('error', (e) => {
+    const el = document.getElementById('err');
+    el.style.display = 'grid';
+    el.textContent = 'Error: ' + (e.message || e.type) + '\n' + (e.filename || '') + ':' + (e.lineno || '');
+  });
+</script>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
