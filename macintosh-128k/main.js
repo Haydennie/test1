@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 // ============================================================== 基础 & 渲染器
 
@@ -59,7 +60,35 @@ controls.autoRotateSpeed = 1.2;
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'r' || e.key === 'R') controls.autoRotate = !controls.autoRotate;
+  if (e.key === 'e' || e.key === 'E') downloadGLB();
 });
+
+// ============================================================== GLB 导出
+
+async function exportGLB() {
+  const exporter = new GLTFExporter();
+  // 只导出设备组（不含房间、灯光、相机）
+  return exporter.parseAsync(setup, { binary: true });
+}
+
+async function downloadGLB() {
+  const buf = await exportGLB();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' }));
+  a.download = 'macintosh-128k.glb';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// 供自动化脚本调用：返回 base64 编码的 GLB
+window.exportGLB = async () => {
+  const bytes = new Uint8Array(await exportGLB());
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(s);
+};
 
 // ============================================================== 材质（PBR）
 
@@ -170,8 +199,14 @@ const MAC = {
 };
 const BEV = 0.0015;                   // 前面板倒角尺寸
 
+// 设备组：主机 + 外设，可整体导出为 GLB（按 E）
+const setup = new THREE.Group();
+setup.name = 'Macintosh128K';
+scene.add(setup);
+
 const mac = new THREE.Group();
-scene.add(mac);
+mac.name = 'Mac';
+setup.add(mac);
 
 // ---------------------------------------------------------------- 前面板
 
@@ -383,8 +418,8 @@ scene.add(mac);
 // ============================================================== M0110 键盘
 
 const keyboard = new THREE.Group();
-keyboard.position.set(0, 0, 0);
-scene.add(keyboard);
+keyboard.name = 'KeyboardM0110';
+setup.add(keyboard);
 
 {
   // 楔形壳体：侧截面挤出（形状 x = 距前缘深度，y = 高度）
@@ -464,7 +499,8 @@ keyboard.position.set(0.005, 0, 0.09);
 // ============================================================== M0100 鼠标
 
 const mouse = new THREE.Group();
-scene.add(mouse);
+mouse.name = 'MouseM0100';
+setup.add(mouse);
 
 {
   const body = rbox(0.060, 0.030, 0.100, 0.007, M.kbCase);
@@ -509,7 +545,7 @@ function coiledCable(waypoints, coilR, turnsPerMeter, tubeR, material) {
   return new THREE.Mesh(geo, material);
 }
 
-scene.add(coiledCable(
+setup.add(coiledCable(
   [[0.105, 0.018, 0.192], [0.140, 0.011, 0.130], [0.130, 0.009, 0.050], [0.095, 0.018, 0.002]],
   0.0058, 150, 0.0015, M.cable));
 
@@ -523,7 +559,7 @@ scene.add(coiledCable(
     new THREE.Vector3(0.090, 0.030, -0.305),
     new THREE.Vector3(0.026, 0.047, -0.282),
   ]);
-  scene.add(new THREE.Mesh(
+  setup.add(new THREE.Mesh(
     new THREE.TubeGeometry(curve, 240, 0.0016, 8, false), M.cable));
 }
 
@@ -545,7 +581,8 @@ scene.add(coiledCable(
   disk.add(label);
   disk.position.set(-0.235, 0, 0.19);
   disk.rotation.y = 0.35;
-  scene.add(disk);
+  disk.name = 'FloppyDisk';
+  setup.add(disk);
 }
 
 // ============================================================== 桌面 / 墙面 / 地面
